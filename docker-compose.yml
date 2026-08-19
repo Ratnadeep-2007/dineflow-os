@@ -1,0 +1,153 @@
+services:
+  # ─── PostgreSQL Database ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: dineflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: ${POSTGRES_DB:-wp_automation}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-wp_automation}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dineflow-net
+
+  # ─── Redis Cache & State Store ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: dineflow-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - dineflow-net
+
+  # ─── DB Migrations Runner (Runs once at startup) ──────────────
+  db-migrate:
+    build:
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: dineflow-db-migrate
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-wp_automation}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - dineflow-net
+
+  # ─── NestJS Backend Server ───────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dineflow-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-wp_automation}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      META_APP_SECRET: ${META_APP_SECRET:-meta_app_secret_placeholder}
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_for_wp_automation}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      GROQ_API_KEY: ${GROQ_API_KEY:-groq_api_key_placeholder}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    networks:
+      - dineflow-net
+
+  # ─── Frontend Receptionist Dashboard & Digital Menu ───────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dineflow-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - dineflow-net
+
+  # ─── Baileys WhatsApp Gateway ────────────────────────────────
+  baileys-gateway:
+    build:
+      context: ./baileys-gateway
+      dockerfile: Dockerfile
+    container_name: dineflow-baileys-gateway
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      BACKEND_URL: http://backend:3000
+      MENU_DASHBOARD_URL: ${MENU_DASHBOARD_URL:-https://dineflow-menu.loca.lt/menu}
+      MAX_DAILY_MESSAGES: ${MAX_DAILY_MESSAGES:-300}
+    volumes:
+      - baileys_auth:/app/auth_info
+      - baileys_data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - dineflow-net
+
+  # ─── Telegram Bot Gateway ────────────────────────────────────
+  telegram-gateway:
+    build:
+      context: ./telegram-gateway
+      dockerfile: Dockerfile
+    container_name: dineflow-telegram-gateway
+    restart: unless-stopped
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      MENU_DASHBOARD_URL: ${MENU_DASHBOARD_URL:-http://localhost:5173/menu}
+    depends_on:
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
+    networks:
+      - dineflow-net
+
+# ─── Persistent Volumes ─────────────────────────────────────────
+volumes:
+  postgres_data:
+  redis_data:
+  baileys_auth:
+  baileys_data:
+
+# ─── Shared Bridge Network ──────────────────────────────────────
+networks:
+  dineflow-net:
+    driver: bridge

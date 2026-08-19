@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build & Dist outputs
+dist/
+build/
+.next/
+out/
+
+# Environment variables & secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+*.env
+
+# WhatsApp private keys & session auth
+auth_info/
+baileys-gateway/auth_info/
+Baileys/
+telegram-gateway/data/
+
+# Logs & Runtime
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS Files
+.DS_Store
+Thumbs.db

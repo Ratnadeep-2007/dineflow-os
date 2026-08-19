@@ -1,0 +1,13 @@
+{
+  "date": "2026-08-19",
+  "totalSent": 16,
+  "maxDailyLimit": 300,
+  "remaining": 284,
+  "lastSentTimestamp": "2026-08-19T05:48:41.297Z",
+  "history": [
+    {
+      "date": "2026-08-18",
+      "totalSent": 16
+    }
+  ]
+}

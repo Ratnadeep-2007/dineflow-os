@@ -1,0 +1,16 @@
+{
+  "name": "wp-automation-db",
+  "version": "1.0.0",
+  "description": "Database migrations for WhatsApp AI Ordering & Reservation System",
+  "main": "index.js",
+  "scripts": {
+    "migrate:up": "node-pg-migrate up",
+    "migrate:down": "node-pg-migrate down",
+    "migrate:create": "node-pg-migrate create"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-pg-migrate": "^6.2.1",
+    "pg": "^8.11.5"
+  }
+}
