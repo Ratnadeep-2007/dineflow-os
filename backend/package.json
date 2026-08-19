@@ -32,7 +32,7 @@
     "@nestjs/websockets": "^11.1.28",
     "axios": "^1.19.0",
     "bcrypt": "^6.0.0",
-    "bullmq": "^6.0.5",
+    "bullmq": "^5.41.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.3.0",
