@@ -28,14 +28,14 @@ export async function handleInbound(
   const rawInput = body.trim().toLowerCase();
   const cleanInput = rawInput.replace(/[^\w\s]/gi, '').trim();
 
-  console.log(`[Router 📥] Phone: ${phone} | Input: "${cleanInput}" | Session State: ${session.state}`);
+  console.log(`[Router 📥] Phone: ${phone} | Raw: "${rawInput}" | Clean: "${cleanInput}" | State: ${session.state}`);
 
   // ── 1. EXACT "DINEIN" TRIGGER ───────────────────────────────
-  // ONLY triggers if user explicitly says "dinein", "dine in", "dine" or presses Dine In button
   if (
     cleanInput === 'dinein' ||
     cleanInput === 'dine in' ||
-    cleanInput === 'dine' ||
+    rawInput === '/dinein' ||
+    rawInput === '/dine_in' ||
     rawInput === BTN.DINE_IN
   ) {
     session.orderType = 'DINE_IN';
@@ -46,15 +46,12 @@ export async function handleInbound(
     return;
   }
 
-  // ── 2. EXACT "HI" / GREETING TRIGGER ────────────────────────
-  // ONLY triggers if user explicitly says "hi", "hello", "hey", "start", "menu"
+  // ── 2. EXACT "/BOT" ACTIVATION TRIGGER (Replaced "HI") ───────
+  // ONLY triggers if user explicitly types "/bot" or "bot"
   if (
-    cleanInput === 'hi' ||
-    cleanInput === 'hello' ||
-    cleanInput === 'hey' ||
-    cleanInput === 'start' ||
-    cleanInput === 'reset' ||
-    cleanInput === 'menu' ||
+    rawInput === '/bot' ||
+    cleanInput === 'bot' ||
+    rawInput === '/start' ||
     rawInput === BTN.RESET
   ) {
     await clearSession(phone);
@@ -65,13 +62,13 @@ export async function handleInbound(
     return;
   }
 
-  // ── 3. IF IDLE AND NOT DINEIN / HI → DO NOT RESPOND (IGNORE) 
+  // ── 3. IF IDLE AND NOT /BOT OR DINEIN → STAY COMPLETELY SILENT ─
   if (session.state === STATES.IDLE) {
-    console.log(`[Router 🤫] Ignoring unprompted message "${cleanInput}" from ${phone} in IDLE state.`);
-    return; // Stay completely silent
+    console.log(`[Router 🤫] Ignoring unprompted message "${rawInput}" from ${phone} in IDLE state.`);
+    return; // Do NOT respond to Hi, Hello, or any chatter
   }
 
-  // ── 4. IF IN AWAITING_ORDER_TYPE STATE (user previously sent Hi) ─
+  // ── 4. IF IN AWAITING_ORDER_TYPE STATE (user previously sent /bot) ─
   if (session.state === STATES.AWAITING_ORDER_TYPE) {
     if (cleanInput === '1' || cleanInput === 'dine in' || cleanInput === 'dinein') {
       session.orderType = 'DINE_IN';
@@ -99,8 +96,7 @@ export async function handleInbound(
       return;
     }
 
-    // If random text while awaiting order type, ignore to avoid spamming
-    console.log(`[Router 🤫] Ignoring unrecognized choice "${cleanInput}" while awaiting order type.`);
+    // Ignore other text while awaiting choice
     return;
   }
 
@@ -122,7 +118,7 @@ export async function handleInbound(
       return;
     }
 
-    return; // Ignore other inputs
+    return;
   }
 
   // ── 6. IF IN DINE_IN_MENU STATE ─────────────────────────────

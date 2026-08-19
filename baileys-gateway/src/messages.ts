@@ -124,7 +124,7 @@ export async function sendOrderConfirmed(sock: WASocket, jid: string, orderRef: 
     `🎉 *Order Confirmed!*\n\n` +
     `Order reference: *#${orderRef}*\n\n` +
     `Thank you for ordering with *DineFlow*! 🍽️\n\n` +
-    `_Type *Hi* or *Dinein* anytime to start a new order._`,
+    `_Type */bot* or *Dinein* anytime to start a new order._`,
   );
 }
 
@@ -134,7 +134,7 @@ export async function sendInvalidInput(sock: WASocket, jid: string): Promise<voi
     sock,
     jid,
     `❓ I didn't recognize that.\n\n` +
-    `Reply with *1* for Dine In, *2* for Takeaway, *3* for Delivery, or type *Hi* to start over.`,
+    `Reply with *1* for Dine In, *2* for Takeaway, *3* for Delivery, or type */bot* to start over.`,
   );
 }
 
