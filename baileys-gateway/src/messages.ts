@@ -42,7 +42,7 @@ export async function sendDineInMenu(
   menuToken: string,
   phone: string,
 ): Promise<void> {
-  const baseUrl = process.env.MENU_DASHBOARD_URL ?? 'https://dineflow-menu.loca.lt/menu';
+  const baseUrl = process.env.MENU_DASHBOARD_URL ?? 'https://dineflow-kiosk.vercel.app/menu';
   const menuUrl = `${baseUrl}?mode=dine_in&phone=${phone}`;
 
   await sendText(
@@ -62,7 +62,7 @@ export async function sendTakeawayMenu(
   menuToken: string,
   phone: string,
 ): Promise<void> {
-  const baseUrl = process.env.MENU_DASHBOARD_URL ?? 'https://dineflow-menu.loca.lt/menu';
+  const baseUrl = process.env.MENU_DASHBOARD_URL ?? 'https://dineflow-kiosk.vercel.app/menu';
   const menuUrl = `${baseUrl}?mode=takeaway&phone=${phone}`;
 
   await sendText(
