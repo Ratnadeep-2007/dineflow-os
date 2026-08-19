@@ -8,11 +8,7 @@ import {
   Search,
   Check,
   ArrowRight,
-  Clock,
   ChevronRight,
-  Flame,
-  ChefHat,
-  RotateCcw,
 } from 'lucide-react';
 import { API_BASE_URL } from './config';
 
@@ -372,7 +368,6 @@ export default function Menu() {
 
   const windowWidth = useWindowWidth();
   const isDesktop = windowWidth >= 1024;
-  const isTablet = windowWidth >= 640 && windowWidth < 1024;
   const isMobile = windowWidth < 640;
 
   // Filters State
