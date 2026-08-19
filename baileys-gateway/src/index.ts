@@ -7,12 +7,22 @@ import makeWASocket, {
   WAMessageKey,
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
+import http from 'http';
 import pino from 'pino';
 import { isMessageSeen, redis } from './session.js';
 import { handleInbound } from './flow.js';
 
 // ─── Logger setup (pretty-print in dev) ───────────────────────
 const logger = pino({ level: 'info' });
+
+// ─── HTTP Health Check Server (For Render / Cloud hosting) ────
+const PORT = process.env.PORT || 8080;
+http.createServer((_req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('DineFlow WhatsApp Gateway is Live!');
+}).listen(PORT, () => {
+  logger.info(`Health check server listening on port ${PORT}`);
+});
 
 // ─── Utility: extract JID phone number ────────────────────────
 function phoneFromJid(jid: string): string {
