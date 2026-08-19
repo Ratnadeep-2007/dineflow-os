@@ -24,8 +24,9 @@ export async function handleInbound(
 ): Promise<void> {
   const session = await getSession(phone);
   
-  // Clean input: lowercase, trim whitespace, strip punctuation
+  // Clean input: lowercase, trim whitespace, normalize slashes
   const rawInput = body.trim().toLowerCase();
+  const normalizedInput = rawInput.replace(/\s+/g, '');
   const cleanInput = rawInput.replace(/[^\w\s]/gi, '').trim();
 
   console.log(`[Router 📥] Phone: ${phone} | Raw: "${rawInput}" | Clean: "${cleanInput}" | State: ${session.state}`);
@@ -36,6 +37,7 @@ export async function handleInbound(
     cleanInput === 'dine in' ||
     rawInput === '/dinein' ||
     rawInput === '/dine_in' ||
+    rawInput === '/bot/dinein' ||
     rawInput === BTN.DINE_IN
   ) {
     session.orderType = 'DINE_IN';
@@ -46,12 +48,12 @@ export async function handleInbound(
     return;
   }
 
-  // ── 2. EXACT "/BOT" ACTIVATION TRIGGER (Replaced "HI") ───────
-  // ONLY triggers if user explicitly types "/bot" or "bot"
+  // ── 2. EXACT "/BOT/HI" ACTIVATION TRIGGER ───────────────────
+  // ONLY triggers if user explicitly types "/bot/HI", "/bot/hi", or "bot/hi"
   if (
-    rawInput === '/bot' ||
-    cleanInput === 'bot' ||
-    rawInput === '/start' ||
+    normalizedInput === '/bot/hi' ||
+    normalizedInput === 'bot/hi' ||
+    normalizedInput === '/bot/hello' ||
     rawInput === BTN.RESET
   ) {
     await clearSession(phone);
@@ -62,13 +64,13 @@ export async function handleInbound(
     return;
   }
 
-  // ── 3. IF IDLE AND NOT /BOT OR DINEIN → STAY COMPLETELY SILENT ─
+  // ── 3. IF IDLE AND NOT /BOT/HI OR DINEIN → STAY COMPLETELY SILENT ─
   if (session.state === STATES.IDLE) {
     console.log(`[Router 🤫] Ignoring unprompted message "${rawInput}" from ${phone} in IDLE state.`);
-    return; // Do NOT respond to Hi, Hello, or any chatter
+    return; // Do NOT respond to plain Hi, Hello, or casual chatter
   }
 
-  // ── 4. IF IN AWAITING_ORDER_TYPE STATE (user previously sent /bot) ─
+  // ── 4. IF IN AWAITING_ORDER_TYPE STATE (user previously sent /bot/HI) ─
   if (session.state === STATES.AWAITING_ORDER_TYPE) {
     if (cleanInput === '1' || cleanInput === 'dine in' || cleanInput === 'dinein') {
       session.orderType = 'DINE_IN';
